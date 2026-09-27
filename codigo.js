@@ -154,6 +154,20 @@ global.t0 = 0;
 global.tf = 24*3600;
 global.h0 = 1;
 global.tol= 0.0000000001;
-global.useReaction = true;
+
+// useReaction pode ser definido via argumento de linha de comando:
+//   node codigo.js true   -> com reação
+//   node codigo.js false  -> sem reação
+//   node codigo.js        -> usa o padrão (true, com reação)
+function parseUseReactionArg(argv) {
+    const arg = argv[2];
+    if (arg === undefined) return true;
+    const normalized = arg.trim().toLowerCase();
+    if (['true', '1', 'com', 'cr'].includes(normalized)) return true;
+    if (['false', '0', 'sem', 'sr'].includes(normalized)) return false;
+    console.warn(`[!] Argumento "${arg}" não reconhecido para useReaction. Use true/false. Usando padrão: true.`);
+    return true;
+}
+global.useReaction = parseUseReactionArg(process.argv);
 
 realizarCalculos();

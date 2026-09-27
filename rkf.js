@@ -21,7 +21,7 @@ function rkf(f, y0, t0, h0, tf, resultados = [], logCallback) {
 
         for(let i=0;i<6;i++){
             for(let j=0;j<f.length;j++){
-                k[i][j] = h * f[j](t+A[i]*h, y.map((yi) => {return B[i].reduce((sum, Bm, m) => { return sum + Bm * (k[m] ? (k[m][j] || 0) : 0)}, yi)}))
+                k[i][j] = h * f[j](t+A[i]*h, y.map((yi, idx) => {return B[i].reduce((sum, Bm, m) => { return sum + Bm * (k[m] ? (k[m][idx] || 0) : 0)}, yi)}))
                 TE[j] += CT[i] * k[i][j];
             }
         }

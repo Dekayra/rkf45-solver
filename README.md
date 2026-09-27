@@ -45,31 +45,37 @@ The system boils down to 10 coupled ODEs (mass and energy balance per tank), sol
 
 | Tank | Concentration [kg/m³] | Temperature [°C] |
 |---|---|---|
-| 1 | 11.509327 | 60.943147 |
-| 2 | 11.508950 | 60.942269 |
-| 3 | 19.056462 | 15.660045 |
-| 4 | 16.987486 | 27.977508 |
-| 5 | 11.459569 | 60.791395 |
+| 1 | 11.509320 | 60.943131 |
+| 2 | 11.508919 | 60.942195 |
+| 3 | 19.056452 | 15.660023 |
+| 4 | 16.987256 | 27.976814 |
+| 5 | 11.458546 | 60.788266 |
 
 **Case 2 — with reaction** (final state at t = 24 h):
 
 | Tank | Concentration [kg/m³] | Temperature [°C] |
 |---|---|---|
-| 1 | 11.509327 | 60.943147 |
-| 2 | 11.508950 | 60.942269 |
-| 3 | 19.056462 | 15.660045 |
-| 4 | 16.987486 | 27.977508 |
-| 5 | 11.459569 | 60.791395 |
+| 1 | 11.509320 | 60.943131 |
+| 2 | 11.508919 | 60.942195 |
+| 3 | 19.056452 | 15.660023 |
+| 4 | 16.987256 | 27.976814 |
+| 5 | 11.458546 | 60.788266 |
 
 The two cases converge to essentially the same values: the reaction rate constant, evaluated at the process temperatures, is many orders of magnitude smaller than the mass/energy exchanged by the flows in and out of each tank (e.g. `dC1/dt` inflow/outflow term ≈ 1.25×10⁻³ vs. reaction term ≈ 1.13×10⁻⁴⁸), so the reaction term is effectively negligible here. Full transient plots, the error-tolerance/step-size sensitivity discussion (including a divergence case caused by too large a max step), and the complete derivation are in [`Ricardo_Solução.pdf`](Ricardo_Solução.pdf).
 
 ### Running it
 
 ```bash
-node codigo.js
+node codigo.js            # defaults to the reaction case (useReaction = true)
+node codigo.js true       # with reaction
+node codigo.js false      # without reaction
 ```
 
-Set `useReaction` (true/false) at the bottom of `codigo.js` to switch between the two cases. Results are written to `resultados_sr.csv` (sem reação) or `resultados_cr.csv` (com reação).
+`true/1/com/cr` and `false/0/sem/sr` are all accepted as the argument. Results are written to `resultados_sr.csv` (sem reação) or `resultados_cr.csv` (com reação).
+
+### Known issue (fixed)
+
+`rkf.js` had a bug in the stage-evaluation step: when building the perturbed state vector for each intermediate stage, every component reused the *outer* equation index (`j`) instead of its *own* component index, so components other than the first were perturbed with the wrong slope. This only produces a visibly wrong result for systems where the state components evolve differently and are tightly coupled (verified against a harmonic oscillator with a known analytical solution: error dropped from ~4×10⁻² to ~10⁻¹³ after the fix). For this specific tank dataset the effect was small (4th–5th decimal place) because the adaptive step size ends up very small anyway, but the fix is now applied.
 
 ---
 
@@ -112,28 +118,34 @@ O sistema resulta em 10 EDOs acopladas (balanço de massa e energia por tanque),
 
 | Tanque | Concentração [kg/m³] | Temperatura [°C] |
 |---|---|---|
-| 1 | 11.509327 | 60.943147 |
-| 2 | 11.508950 | 60.942269 |
-| 3 | 19.056462 | 15.660045 |
-| 4 | 16.987486 | 27.977508 |
-| 5 | 11.459569 | 60.791395 |
+| 1 | 11.509320 | 60.943131 |
+| 2 | 11.508919 | 60.942195 |
+| 3 | 19.056452 | 15.660023 |
+| 4 | 16.987256 | 27.976814 |
+| 5 | 11.458546 | 60.788266 |
 
 **Caso 02 — com reação** (condição final em t = 24 h):
 
 | Tanque | Concentração [kg/m³] | Temperatura [°C] |
 |---|---|---|
-| 1 | 11.509327 | 60.943147 |
-| 2 | 11.508950 | 60.942269 |
-| 3 | 19.056462 | 15.660045 |
-| 4 | 16.987486 | 27.977508 |
-| 5 | 11.459569 | 60.791395 |
+| 1 | 11.509320 | 60.943131 |
+| 2 | 11.508919 | 60.942195 |
+| 3 | 19.056452 | 15.660023 |
+| 4 | 16.987256 | 27.976814 |
+| 5 | 11.458546 | 60.788266 |
 
 Os dois casos convergem para praticamente os mesmos valores: a constante de velocidade de reação, avaliada nas temperaturas do processo, é muitas ordens de grandeza menor que os termos de entrada/saída de massa e energia de cada tanque (ex.: termo de entrada/saída em `dC1/dt` ≈ 1,25×10⁻³ contra termo de reação ≈ 1,13×10⁻⁴⁸), tornando a reação praticamente desprezível neste caso. Os gráficos completos da evolução temporal, a discussão sobre sensibilidade de tolerância/passo (incluindo um caso de divergência causado por um passo máximo grande demais) e a dedução completa estão em [`Ricardo_Solução.pdf`](Ricardo_Solução.pdf).
 
 ### Executando
 
 ```bash
-node codigo.js
+node codigo.js            # padrão: caso com reação (useReaction = true)
+node codigo.js true       # com reação
+node codigo.js false      # sem reação
 ```
 
-Ajuste `useReaction` (true/false) no final de `codigo.js` para alternar entre os dois casos. Os resultados são salvos em `resultados_sr.csv` (sem reação) ou `resultados_cr.csv` (com reação).
+Os valores `true/1/com/cr` e `false/0/sem/sr` são aceitos como argumento. Os resultados são salvos em `resultados_sr.csv` (sem reação) ou `resultados_cr.csv` (com reação).
+
+### Problema conhecido (corrigido)
+
+O `rkf.js` tinha um bug na etapa de avaliação dos estágios: ao montar o vetor de estado perturbado para cada estágio intermediário, todos os componentes reutilizavam o índice da equação *externa* (`j`) em vez do índice do *próprio* componente, fazendo com que componentes além do primeiro fossem perturbados com a inclinação errada. Isso só produz um resultado visivelmente incorreto em sistemas cujos componentes evoluem de forma diferente e fortemente acoplada (verificado com um oscilador harmônico de solução analítica conhecida: o erro caiu de ~4×10⁻² para ~10⁻¹³ após a correção). Para este conjunto de dados dos tanques, o efeito foi pequeno (4ª–5ª casa decimal), pois o passo adaptativo acaba ficando muito pequeno de qualquer forma, mas a correção já está aplicada.
