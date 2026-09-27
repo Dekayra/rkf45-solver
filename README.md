@@ -61,7 +61,15 @@ The system boils down to 10 coupled ODEs (mass and energy balance per tank), sol
 | 4 | 16.987256 | 27.976814 |
 | 5 | 11.458546 | 60.788266 |
 
-The two cases converge to essentially the same values: the reaction rate constant, evaluated at the process temperatures, is many orders of magnitude smaller than the mass/energy exchanged by the flows in and out of each tank (e.g. `dC1/dt` inflow/outflow term ≈ 1.25×10⁻³ vs. reaction term ≈ 1.13×10⁻⁴⁸), so the reaction term is effectively negligible here. Full transient plots, the error-tolerance/step-size sensitivity discussion (including a divergence case caused by too large a max step), and the complete derivation are in [`Ricardo_Solução.pdf`](Ricardo_Solução.pdf).
+The two cases converge to essentially the same values: the reaction rate constant, evaluated at the process temperatures, is many orders of magnitude smaller than the mass/energy exchanged by the flows in and out of each tank (e.g. `dC1/dt` inflow/outflow term ≈ 1.25×10⁻³ vs. reaction term ≈ 1.13×10⁻⁴⁸), so the reaction term is effectively negligible here. That is also why the transient curves below look identical for both cases:
+
+**Without reaction:**
+![Concentration and temperature over time — without reaction](grafico_sem_reacao.png)
+
+**With reaction:**
+![Concentration and temperature over time — with reaction](grafico_com_reacao.png)
+
+Full step-by-step derivation, the RKF theory, and the error-tolerance/step-size sensitivity discussion (including a divergence case caused by too large a max step) are in [`Ricardo_Solução.pdf`](Ricardo_Solução.pdf) — note the plots there were generated before the RKF indexing bug fix below, so the exact curve values differ very slightly from the ones shown here.
 
 ### Running it
 
@@ -134,7 +142,15 @@ O sistema resulta em 10 EDOs acopladas (balanço de massa e energia por tanque),
 | 4 | 16.987256 | 27.976814 |
 | 5 | 11.458546 | 60.788266 |
 
-Os dois casos convergem para praticamente os mesmos valores: a constante de velocidade de reação, avaliada nas temperaturas do processo, é muitas ordens de grandeza menor que os termos de entrada/saída de massa e energia de cada tanque (ex.: termo de entrada/saída em `dC1/dt` ≈ 1,25×10⁻³ contra termo de reação ≈ 1,13×10⁻⁴⁸), tornando a reação praticamente desprezível neste caso. Os gráficos completos da evolução temporal, a discussão sobre sensibilidade de tolerância/passo (incluindo um caso de divergência causado por um passo máximo grande demais) e a dedução completa estão em [`Ricardo_Solução.pdf`](Ricardo_Solução.pdf).
+Os dois casos convergem para praticamente os mesmos valores: a constante de velocidade de reação, avaliada nas temperaturas do processo, é muitas ordens de grandeza menor que os termos de entrada/saída de massa e energia de cada tanque (ex.: termo de entrada/saída em `dC1/dt` ≈ 1,25×10⁻³ contra termo de reação ≈ 1,13×10⁻⁴⁸), tornando a reação praticamente desprezível neste caso. É por isso que as curvas de evolução temporal abaixo são praticamente idênticas nos dois casos:
+
+**Sem reação:**
+![Concentração e temperatura ao longo do tempo — sem reação](grafico_sem_reacao.png)
+
+**Com reação:**
+![Concentração e temperatura ao longo do tempo — com reação](grafico_com_reacao.png)
+
+A dedução completa, a teoria do RKF e a discussão sobre sensibilidade de tolerância/passo (incluindo um caso de divergência causado por um passo máximo grande demais) estão em [`Ricardo_Solução.pdf`](Ricardo_Solução.pdf) — os gráficos lá foram gerados antes da correção do bug de indexação do RKF (abaixo), então os valores exatos das curvas diferem levemente dos apresentados aqui.
 
 ### Executando
 
