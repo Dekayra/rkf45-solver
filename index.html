@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RKF45 Tank Network Simulator</title>
+<style>
+    :root {
+        --bg: #0f1420; --panel: #171d2e; --border: #2a3350; --text: #e6e9f2;
+        --muted: #8b93ab; --accent: #4a90d9; --accent2: #f2c811; --danger: #e2711d;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0; font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+        background: var(--bg); color: var(--text); padding: 20px;
+    }
+    h1 { font-size: 1.4rem; margin: 0 0 4px; }
+    p.subtitle { color: var(--muted); margin: 0 0 20px; font-size: 0.9rem; }
+    .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+    @media (max-width: 950px) { .layout { grid-template-columns: 1fr; } }
+    .panel {
+        background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+        padding: 16px;
+    }
+    .panel h2 { font-size: 1rem; margin: 0 0 12px; color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { padding: 4px 6px; text-align: left; }
+    th { color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+    tr:not(:last-child) td { border-bottom: 1px solid #1f2740; }
+    input, select {
+        width: 100%; background: #0d1220; border: 1px solid var(--border); color: var(--text);
+        padding: 5px 6px; border-radius: 6px; font-size: 0.85rem;
+    }
+    input[type=checkbox] { width: auto; }
+    button {
+        background: var(--accent); color: #fff; border: none; border-radius: 6px;
+        padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600;
+    }
+    button.secondary { background: #232b45; color: var(--text); }
+    button.danger { background: var(--danger); }
+    button.small { padding: 4px 8px; font-size: 0.78rem; }
+    .row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .field-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+    .field-row label { font-size: 0.78rem; color: var(--muted); display: block; margin-bottom: 2px; }
+    .full { grid-column: 1 / -1; }
+    #log {
+        background: #0a0e18; border-radius: 6px; padding: 10px; font-family: monospace;
+        font-size: 0.78rem; max-height: 180px; overflow-y: auto; white-space: pre-wrap;
+        color: #9fd08a;
+    }
+    canvas { width: 100%; background: #0a0e18; border-radius: 6px; }
+    .results-table { max-height: 260px; overflow-y: auto; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; background: #232b45; color: var(--muted); }
+    .checkbox-cell { text-align: center; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<h1>🧪 RKF45 Tank Network Simulator</h1>
+<p class="subtitle">Build any network of mixing tanks and pipes, set the initial conditions, and solve the transient mass/energy balances with an adaptive Runge-Kutta-Fehlberg (RKF45) integrator — all client-side. Loads the FURB assignment (5 tanks) by default; edit freely or start from scratch.</p>
+
+<div class="layout">
+
+    <div class="panel">
+        <div class="toolbar">
+            <h2 style="margin:0">Tanks</h2>
+            <button class="small secondary" id="addTank">+ Add tank</button>
+        </div>
+        <div style="overflow-x:auto">
+        <table id="tanksTable">
+            <thead>
+                <tr>
+                    <th>Name</th><th>C₀ [kg/m³]</th><th>T₀ [°C]</th><th>Volume [m³]</th><th class="checkbox-cell">Fixed</th><th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        </div>
+
+        <div class="toolbar" style="margin-top:18px">
+            <h2 style="margin:0">Pipes</h2>
+            <button class="small secondary" id="addPipe">+ Add pipe</button>
+        </div>
+        <div style="overflow-x:auto">
+        <table id="pipesTable">
+            <thead><tr><th>From</th><th>To</th><th>Flow [m³/h]</th><th></th></tr></thead>
+            <tbody></tbody>
+        </table>
+        </div>
+
+        <h2 style="margin-top:18px">Reaction &amp; fluid</h2>
+        <div class="field-row">
+            <div class="full" style="display:flex;align-items:center;gap:8px">
+                <input type="checkbox" id="reactionEnabled" checked style="width:auto">
+                <label style="margin:0" for="reactionEnabled">Exothermic reaction enabled (r = -k·C²)</label>
+            </div>
+            <div><label>Pre-exp factor</label><input id="preExpFactor" value="16.666666666667"></div>
+            <div><label>Activation term [K]</label><input id="activationTerm" value="-34187.66"></div>
+            <div><label>ΔHr [J/kg]</label><input id="deltaHr" value="-80000000"></div>
+            <div><label>Fluid ρ [kg/m³]</label><input id="fluidRho" value="994"></div>
+            <div><label>Fluid Cp [J/kg·°C]</label><input id="fluidCp" value="4186"></div>
+        </div>
+
+        <h2>Simulation settings</h2>
+        <div class="field-row">
+            <div><label>Duration [h]</label><input id="simHours" value="24"></div>
+            <div><label>Initial step h0 [s]</label><input id="simH0" value="1"></div>
+            <div><label>Tolerance</label><input id="simTol" value="1e-10"></div>
+            <div><label>Sample every [s]</label><input id="simLog" value="10"></div>
+        </div>
+
+        <div class="row">
+            <button id="calculate">▶ Calculate</button>
+            <button class="secondary" id="loadDefault">Load FURB example</button>
+            <button class="secondary" id="loadEmpty">Clear all</button>
+            <button class="secondary" id="exportCsv">Export CSV</button>
+            <button class="secondary" id="exportJson">Export problem JSON</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Results</h2>
+        <canvas id="chartC" height="180"></canvas>
+        <canvas id="chartT" height="180" style="margin-top:10px"></canvas>
+
+        <h2 style="margin-top:16px">Final state <span class="pill" id="finalTimeLabel"></span></h2>
+        <div class="results-table">
+            <table id="finalTable">
+                <thead><tr><th>Tank</th><th>C [kg/m³]</th><th>T [°C]</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <h2 style="margin-top:16px">Log</h2>
+        <div id="log">Ready.</div>
+    </div>
+
+</div>
+
+<script src="rkf.js"></script>
+<script src="engine.js"></script>
+<script src="problem.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

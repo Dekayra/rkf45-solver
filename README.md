@@ -12,8 +12,11 @@
 
 This is a university project for the *Mathematical Models and Methods in Chemical Engineering* course at FURB (Fundação Universitária Regional de Blumenau). It implements the **Runge-Kutta-Fehlberg (RKF45)** method — an adaptive-step-size numerical ODE solver — from scratch in plain JavaScript, and uses it to simulate the transient behavior of a network of interconnected mixing tanks with an optional exothermic chemical reaction.
 
-- `rkf.js` — the generic RKF45 solver (adaptive step size, embedded 4th/5th order error estimate).
-- `codigo.js` — the problem setup: tank/pipe network, mass and energy balances, and the script that runs the simulation and exports results to CSV.
+- `rkf.js` — the generic RKF45 solver (adaptive step size, embedded 4th/5th order error estimate). Knows nothing about tanks.
+- `engine.js` — generic mixing-tank network engine: builds the mass/energy balance ODEs for any set of tanks/pipes you give it and runs them through `rkf.js`.
+- `problem.js` — the FURB assignment expressed as plain data (tanks, pipes, reaction kinetics, fluid properties, simulation settings) consumed by `engine.js`.
+- `codigo.js` — Node CLI: loads `problem.js` (or a custom problem JSON), runs `engine.js`, prints progress, and exports the results to CSV.
+- `index.html` / `app.js` — a browser UI to build a tank network interactively (add/remove tanks and pipes, set initial conditions, reaction and fluid parameters), run the same engine client-side, and view live concentration/temperature charts. See "Interactive web UI" below.
 - `Ricardo_Solução.pdf` — the full handed-in solution: the derivation of the balance equations, the RKF theory, the annotated code, and the final result plots/tables.
 - `PROBLEMA_ORIGINAL.md` — the original assignment statement, in Portuguese, exactly as given by the professor (kept for reference).
 - `tanques.png` — the tank/pipe network diagram (see below).
@@ -74,12 +77,26 @@ Full step-by-step derivation, the RKF theory, and the error-tolerance/step-size 
 ### Running it
 
 ```bash
-node codigo.js            # defaults to the reaction case (useReaction = true)
-node codigo.js true       # with reaction
-node codigo.js false      # without reaction
+node codigo.js            # defaults to the reaction case set in problem.js
+node codigo.js true       # force the reaction case ON
+node codigo.js false      # force the reaction case OFF
+node codigo.js true my-network.json   # use a custom problem file (see problem.js for the shape)
 ```
 
 `true/1/com/cr` and `false/0/sem/sr` are all accepted as the argument. Results are written to `resultados_sr.csv` (sem reação) or `resultados_cr.csv` (com reação).
+
+### Interactive web UI
+
+Open `index.html` in a browser (or serve the folder, e.g. `npx serve .` / `python3 -m http.server`) to build and solve a tank network with no code:
+
+- Add/remove tanks with a name, initial concentration, initial temperature, volume, and a "fixed" flag (for feed/discharge nodes whose C/T never change).
+- Add/remove pipes by picking the *from* and *to* tanks from dropdowns and setting the flow rate.
+- Tune reaction kinetics (pre-exponential factor, activation term, ΔHr), fluid properties (ρ, Cp), and simulation settings (duration, initial step, tolerance, sampling interval).
+- Click **Calculate** to solve the same ODE system as the CLI, right in the browser, with live concentration/temperature-vs-time charts and a final-state table.
+- **Export CSV** downloads the time series; **Export problem JSON** downloads the current network definition so it can be re-run with `node codigo.js true my-network.json`.
+- **Load FURB example** restores the original 5-tank assignment at any time.
+
+The default network loaded on page open is exactly the one in `problem.js`.
 
 ### Known issue (fixed)
 
@@ -93,8 +110,11 @@ node codigo.js false      # without reaction
 
 Este é um projeto acadêmico da disciplina de *Modelos e Métodos Matemáticos em Engenharia Química* da FURB (Fundação Universitária Regional de Blumenau). Nele foi implementado, do zero, em JavaScript puro, o método **Runge-Kutta-Fehlberg (RKF45)** — um solver numérico de EDOs com passo adaptativo — utilizado para simular o comportamento transiente de uma rede de tanques de mistura interligados, com uma reação química exotérmica opcional.
 
-- `rkf.js` — o solver RKF45 genérico (passo adaptativo, estimativa de erro embutida entre 4ª e 5ª ordem).
-- `codigo.js` — a modelagem do problema: rede de tanques/tubulações, balanços de massa e energia, e o script que executa a simulação e exporta os resultados em CSV.
+- `rkf.js` — o solver RKF45 genérico (passo adaptativo, estimativa de erro embutida entre 4ª e 5ª ordem). Não sabe nada sobre tanques.
+- `engine.js` — motor genérico de rede de tanques: monta as EDOs de balanço de massa e energia para qualquer conjunto de tanques/tubulações fornecido e resolve com o `rkf.js`.
+- `problem.js` — o trabalho da FURB descrito como dados simples (tanques, tubulações, cinética da reação, propriedades do fluido, configurações da simulação), consumido pelo `engine.js`.
+- `codigo.js` — CLI em Node: carrega o `problem.js` (ou um JSON de problema personalizado), executa o `engine.js`, imprime o progresso e exporta os resultados em CSV.
+- `index.html` / `app.js` — uma interface web para montar uma rede de tanques interativamente (adicionar/remover tanques e tubulações, definir condições iniciais, parâmetros de reação e fluido), rodar o mesmo motor no navegador e ver gráficos de concentração/temperatura em tempo real. Veja "Interface web interativa" abaixo.
 - `Ricardo_Solução.pdf` — a solução completa entregue: dedução das equações de balanço, teoria do RKF, código comentado e os gráficos/tabelas de resultado finais.
 - `PROBLEMA_ORIGINAL.md` — o enunciado original do trabalho, tal como fornecido pelo professor (mantido para referência).
 - `tanques.png` — o diagrama da rede de tanques e tubulações (veja abaixo).
@@ -155,12 +175,26 @@ A dedução completa, a teoria do RKF e a discussão sobre sensibilidade de tole
 ### Executando
 
 ```bash
-node codigo.js            # padrão: caso com reação (useReaction = true)
-node codigo.js true       # com reação
-node codigo.js false      # sem reação
+node codigo.js            # padrão: caso de reação definido em problem.js
+node codigo.js true       # força o caso com reação
+node codigo.js false      # força o caso sem reação
+node codigo.js true minha-rede.json   # usa um arquivo de problema personalizado (veja o formato em problem.js)
 ```
 
 Os valores `true/1/com/cr` e `false/0/sem/sr` são aceitos como argumento. Os resultados são salvos em `resultados_sr.csv` (sem reação) ou `resultados_cr.csv` (com reação).
+
+### Interface web interativa
+
+Abra `index.html` no navegador (ou sirva a pasta, ex.: `npx serve .` / `python3 -m http.server`) para montar e resolver uma rede de tanques sem escrever código:
+
+- Adicione/remova tanques com nome, concentração inicial, temperatura inicial, volume e uma marcação "fixo" (para nós de alimentação/descarga cujo C/T nunca mudam).
+- Adicione/remova tubulações escolhendo os tanques de *origem* e *destino* em menus suspensos e definindo a vazão.
+- Ajuste a cinética da reação (fator pré-exponencial, termo de ativação, ΔHr), propriedades do fluido (ρ, Cp) e configurações da simulação (duração, passo inicial, tolerância, intervalo de amostragem).
+- Clique em **Calculate** para resolver o mesmo sistema de EDOs do CLI, direto no navegador, com gráficos de concentração/temperatura em tempo real e uma tabela de condição final.
+- **Export CSV** baixa a série temporal; **Export problem JSON** baixa a definição da rede atual, que pode ser reexecutada com `node codigo.js true minha-rede.json`.
+- **Load FURB example** restaura o problema original de 5 tanques a qualquer momento.
+
+A rede carregada por padrão ao abrir a página é exatamente a definida em `problem.js`.
 
 ### Problema conhecido (corrigido)
 
